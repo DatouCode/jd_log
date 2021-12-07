@@ -33,10 +33,10 @@ export default {
     linkClick(title, url) {
       if (this.radio === '1') {
         // 跳转app
-        if (title.includes('京东')) {
-          window.open(`openjd://virtual?params=%7B%22category%22:%22jump%22,%22des%22:%22m%22,%22sourceValue%22:%22babel-act%22,%22sourceType%22:%22babel%22,%22url%22:%22${url}%22%7D`)
-        } else if (title.includes('京喜')) {
+        if (title.includes('京喜')) {
           window.open(`openapp.jdpingou://virtual?params=%7B%22category%22:%22jump%22,%22des%22:%22m%22,%22sourceValue%22:%22babel-act%22,%22sourceType%22:%22babel%22,%22url%22:%22${url}%22%7D`)
+        } else if (title.includes('京东')) {
+          window.open(`openjd://virtual?params=%7B%22category%22:%22jump%22,%22des%22:%22m%22,%22sourceValue%22:%22babel-act%22,%22sourceType%22:%22babel%22,%22url%22:%22${url}%22%7D`)
         }
       } else if (this.radio === '2') {
         // web
