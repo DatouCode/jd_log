@@ -55,7 +55,7 @@ export default {
     this.UA = navigator.userAgent
     this.axios.get('/api/jf_get').then(res => {
       for (let [index, item] of res.data.entries()) {
-        let title = item.match(/^http/) ? '' : item.split('\n')[0]
+        let title = item.match(/^http/) ? '' : item.split('\n')[0].split(' http')[0]
         let url = item.match(/http.*/)[0]
         if (this.UA.indexOf('iPhone') > -1) {
           this.radio = '1'
