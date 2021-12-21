@@ -1,6 +1,10 @@
 <template>
   <div class="list">
-    <el-table :data="items" style="width: 100%">
+    <el-radio v-model="radio" label="1" :disabled="UA.includes('Android')">app</el-radio>
+    <el-radio v-model="radio" label="2">web</el-radio>
+    <el-radio v-model="radio" label="3">copy</el-radio>
+
+    <el-table :data="items" style="width: 100%" stripe>
       <el-table-column prop="title" label="Title"></el-table-column>
       <el-table-column prop="url" label="URL" width="100">
         <template slot-scope="scope">
@@ -10,10 +14,15 @@
           </el-link>
         </template>
       </el-table-column>
+
+      <el-table-column fixed="right" label="操作" width="52" v-if="UA.includes('Mac OS')">
+        <template slot-scope="scope">
+          <el-button @click.native.prevent="deleteRow(scope.$index, items)" type="text" size="small">
+            移除
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
-    <el-radio v-model="radio" label="1">app</el-radio>
-    <el-radio v-model="radio" label="2">web</el-radio>
-    <el-radio v-model="radio" label="3">copy</el-radio>
   </div>
 </template>
 
@@ -35,7 +44,7 @@ export default {
         // 跳转app
         if (title.includes('京喜')) {
           window.open(`openapp.jdpingou://virtual?params=%7B%22category%22:%22jump%22,%22des%22:%22m%22,%22sourceValue%22:%22babel-act%22,%22sourceType%22:%22babel%22,%22url%22:%22${url}%22%7D`)
-        } else if (title.includes('京东')) {
+        } else {
           window.open(`openjd://virtual?params=%7B%22category%22:%22jump%22,%22des%22:%22m%22,%22sourceValue%22:%22babel-act%22,%22sourceType%22:%22babel%22,%22url%22:%22${url}%22%7D`)
         }
       } else if (this.radio === '2') {
@@ -50,14 +59,24 @@ export default {
         });
       }
     },
+    deleteRow(index, rows) {
+      let delUrl = rows[index].url
+      rows.splice(index, 1);
+      this.axios.get(`/api/jingfen?action=del&url=${encodeURIComponent(delUrl)}`).then(res => {
+        this.$message({
+          message: '删除' + res.data,
+          type: 'success'
+        });
+      })
+    }
   },
   mounted() {
     this.UA = navigator.userAgent
-    this.axios.get('/api/jf_get').then(res => {
+    this.axios.get('/api/jingfen?action=get').then(res => {
       for (let [index, item] of res.data.entries()) {
         let title = item.match(/^http/) ? '' : item.split('\n')[0].split(' http')[0]
         let url = item.match(/http.*/)[0]
-        if (this.UA.indexOf('iPhone') > -1) {
+        if (this.UA.includes('iPhone')) {
           this.radio = '1'
         } else {
           this.radio = '2'
