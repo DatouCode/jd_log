@@ -15,7 +15,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column fixed="right" label="操作" width="52" v-if="UA.includes('Mac OS')">
+      <el-table-column fixed="right" label="操作" width="52" v-if="!(UA.includes('iPhone') || UA.includes('Android'))">
         <template slot-scope="scope">
           <el-button @click.native.prevent="deleteRow(scope.$index, items)" type="text" size="small">
             移除
