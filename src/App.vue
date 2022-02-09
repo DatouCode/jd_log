@@ -12,9 +12,7 @@
     </el-tree>
 
     <div ref="right" class="right">
-      <div ref="log" style="height: 0">
-        {{ log }}
-      </div>
+      {{ log }}
     </div>
   </div>
 </template>
@@ -26,32 +24,7 @@ export default {
   name: 'App',
   data() {
     return {
-      data: [
-        {
-          id: 1,
-          label: '02-07',
-          children: [
-            {
-              id: 3,
-              label: 'aa.log',
-            },
-          ],
-        },
-        {
-          id: 2,
-          label: '02-08',
-          children: [
-            {
-              id: 5,
-              label: 'bb.log',
-            },
-            {
-              id: 7,
-              label: 'cc.log',
-            }
-          ],
-        },
-      ],
+      data: [],
       defaultProps: {
         children: 'children',
         label: 'label',
@@ -67,16 +40,30 @@ export default {
         dir += '/' + filename
         console.log(dir)
         this.log = await this.get(dir)
-
-        console.log(window.getComputedStyle(this.$refs.log).height)
       }
     },
     async get(filename) {
       let {data} = await axios.get(`/api/get?filename=${filename}`)
       return data
     }
-
   },
+  async mounted() {
+    let id = 1
+    let {data} = await axios.get('/api/dir')
+    console.log(data)
+    Object.keys(data).forEach(item => {
+      this.data.push({
+        id: id++,
+        label: item,
+        children: data[item].map(item => {
+          return {
+            id: id++,
+            label: item
+          }
+        })
+      })
+    })
+  }
 }
 </script>
 
@@ -99,7 +86,6 @@ export default {
 
 .right {
   width: 80%;
-  height: 0;
   background: aliceblue;
   left: 20%;
   position: relative;
