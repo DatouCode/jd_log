@@ -1,17 +1,37 @@
 <template>
   <div id="app">
-    <el-tree
-        ref="tree"
-        :data="data"
-        :props="defaultProps"
-        accordion
-        @node-click="handleNodeClick"
-        node-key="id"
-        :default-expanded-keys="[2]"
-    >
-    </el-tree>
+    <div class="left">
 
-    <div ref="right" class="right">
+      <a-directory-tree
+          v-model:expandedKeys="expandedKeys"
+          v-model:selectedKeys="selectedKeys"
+          multiple
+          :tree-data="treeData"
+          :load-data="onLoadData"
+          @select="handleSelect"
+      ></a-directory-tree>
+
+      <hr>
+      <a-button class="btn" type="primary" shape="circle" @click="scrollToBottom(0)">
+        <template #icon>
+          <UpOutlined/>
+        </template>
+      </a-button>
+
+      <a-button class="btn" type="primary" shape="circle" @click="scrollToBottom(1)">
+        <template #icon>
+          <DownOutlined/>
+        </template>
+      </a-button>
+
+      <a-button class="btn" type="danger" shape="circle" @click="deleteLog">
+        <template #icon>
+          <DeleteOutlined/>
+        </template>
+      </a-button>
+    </div>
+
+    <div class="right">
       {{ log }}
     </div>
   </div>
@@ -19,52 +39,78 @@
 
 <script>
 import axios from "axios";
+import {UpOutlined, DownOutlined, DeleteOutlined} from '@ant-design/icons-vue';
+import {defineComponent, onMounted, ref} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'App',
-  data() {
-    return {
-      data: [],
-      defaultProps: {
-        children: 'children',
-        label: 'label',
-      },
-      log: '',
-    }
+  components: {
+    UpOutlined,
+    DownOutlined,
+    DeleteOutlined
   },
-  methods: {
-    async handleNodeClick(data) {
-      if (!data.children) {
-        let dir = this.$refs.tree.getNode(data.id).parent.data.label
-        let filename = data.label
-        dir += '/' + filename
-        console.log(dir)
-        this.log = await this.get(dir)
+  setup() {
+    const expandedKeys = ref(['0-0']);
+    const selectedKeys = ref([]);
+    const log = ref('')
+    let treeData = ref([]);
+
+    treeData.value = []
+
+    const handleSelect = (selectedKeys, e) => {
+      if (selectedKeys[0].includes('.log')) {
+        // 加载日志
+        axios.get(`/api/get?filename=${selectedKeys[0].replace('-jd', '/jd')}`).then(res => {
+          log.value = res.data
+        });
       }
-    },
-    async get(filename) {
-      let {data} = await axios.get(`/api/get?filename=${filename}`)
-      return data
+    }
+
+    const onLoadData = treeNode => {
+      return new Promise(resolve => {
+        if (treeNode.dataRef.children) {
+          resolve()
+        } else {
+          axios.get(`/api/dir?dir=${treeNode.dataRef.key}`).then(res => {
+            let temp = []
+            Object.keys(res.data).forEach(key => {
+              temp.push({
+                title: key,
+                key: `${treeNode.dataRef.key}-${key}`,
+                isLeaf: true
+              })
+            })
+            treeNode.dataRef.children = temp
+            treeData.value = [...treeData.value]
+            resolve()
+          })
+        }
+      })
+    }
+
+    onMounted(() => {
+      axios.get('/api/dir').then(res => {
+        Object.keys(res.data).forEach(key => {
+          treeData.value.push({
+            title: key,
+            key: key,
+          })
+        })
+        treeData.value = [...treeData.value]
+      })
+    });
+
+    return {
+      expandedKeys,
+      selectedKeys,
+      treeData,
+      log,
+
+      handleSelect,
+      onLoadData
     }
   },
-  async mounted() {
-    let id = 1
-    let {data} = await axios.get('/api/dir')
-    console.log(data)
-    Object.keys(data).forEach(item => {
-      this.data.push({
-        id: id++,
-        label: item,
-        children: data[item].map(item => {
-          return {
-            id: id++,
-            label: item
-          }
-        })
-      })
-    })
-  }
-}
+})
 </script>
 
 <style>
@@ -73,22 +119,25 @@ export default {
   padding: 0;
 }
 
-#app {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-}
-
-.el-tree {
-  width: 20%;
+.left {
+  width: 200px;
+  height: 100vh;
+  float: left;
   position: fixed;
 }
 
+.left .btn {
+  margin-right: 20px;
+}
+
 .right {
-  width: 80%;
-  background: aliceblue;
-  left: 20%;
+  width: calc(100% - 200px);
+  background: antiquewhite;
+  word-wrap: normal;
+  white-space: pre-wrap;
+  overflow: hidden;
   position: relative;
+  left: 200px;
 }
 
 </style>
