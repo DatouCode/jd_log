@@ -1,26 +1,22 @@
 {
-  "name": "aab",
-  "version": "0.1.0",
+  "name": "jd_log",
   "private": true,
+  "version": "0.0.0",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@ant-design/icons-vue": "^6.0.1",
-    "ant-design-vue": "^2.2.8",
+    "@element-plus/icons-vue": "^0.2.7",
     "axios": "^0.25.0",
-    "install": "^0.13.0",
-    "npm": "^8.4.1",
-    "vue": "^3.2.13"
+    "element-plus": "^2.0.1",
+    "vue": "^3.2.25"
   },
   "devDependencies": {
-    "@vue/cli-service": "~5.0.0-rc.2"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ]
+    "@vitejs/plugin-vue": "^2.2.0",
+    "typescript": "^4.5.4",
+    "vite": "^2.8.0",
+    "vue-tsc": "^0.29.8"
+  }
 }

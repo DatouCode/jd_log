@@ -1,34 +1,13 @@
 <template>
   <div id="app">
     <div class="left">
+      <el-tree ref="tree" node-key="id" :data="data.data" :props="defaultProps" @node-click="handleNodeClick"
+               default-expanded-keys="[1]" accordion/>
 
-      <a-directory-tree
-          v-model:expandedKeys="expandedKeys"
-          v-model:selectedKeys="selectedKeys"
-          multiple
-          :tree-data="treeData"
-          :load-data="onLoadData"
-          @select="handleSelect"
-      ></a-directory-tree>
-
-      <hr>
-      <a-button class="btn" type="primary" shape="circle" @click="scrollToBottom(0)">
-        <template #icon>
-          <UpOutlined/>
-        </template>
-      </a-button>
-
-      <a-button class="btn" type="primary" shape="circle" @click="scrollToBottom(1)">
-        <template #icon>
-          <DownOutlined/>
-        </template>
-      </a-button>
-
-      <a-button class="btn" type="danger" shape="circle" @click="deleteLog">
-        <template #icon>
-          <DeleteOutlined/>
-        </template>
-      </a-button>
+      <div class="button">
+        <el-button type="primary" :icon="ArrowUpBold" circle @click="scroll(0)"></el-button>
+        <el-button type="primary" :icon="ArrowDownBold" circle @click="scroll(1)"></el-button>
+      </div>
     </div>
 
     <div class="right">
@@ -37,79 +16,72 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
-import {UpOutlined, DownOutlined, DeleteOutlined} from '@ant-design/icons-vue';
-import {defineComponent, onMounted, ref} from 'vue';
+<script lang="ts" setup>
+import axios from 'axios';
+import {onMounted, reactive, ref} from "vue";
 
-export default defineComponent({
-  name: 'App',
-  components: {
-    UpOutlined,
-    DownOutlined,
-    DeleteOutlined
-  },
-  setup() {
-    const expandedKeys = ref(['0-0']);
-    const selectedKeys = ref([]);
-    const log = ref('')
-    let treeData = ref([]);
+// Icon
+import {ArrowDownBold, ArrowUpBold} from "@element-plus/icons-vue";
 
-    treeData.value = []
+interface Tree {
+  id?: number,
+  label?: string,
+  isLeaf?: boolean,
+  children?: Tree[]
+}
 
-    const handleSelect = (selectedKeys, e) => {
-      if (selectedKeys[0].includes('.log')) {
-        // 加载日志
-        axios.get(`/api/get?filename=${selectedKeys[0].replace('-jd', '/jd')}`).then(res => {
+const tree: any = ref(null)
+const log = ref("")
+
+const handleNodeClick = (data: Tree) => {
+  if (data.isLeaf) {
+    // 叶子节点
+    let path: string = tree.value.getNode(data.id).parent.data.label
+    path += '/' + data.label
+    axios.get(`/api/get?filename=${path}`)
+        .then(res => {
           log.value = res.data
-        });
-      }
-    }
+        })
+  }
+}
 
-    const onLoadData = treeNode => {
-      return new Promise(resolve => {
-        if (treeNode.dataRef.children) {
-          resolve()
-        } else {
-          axios.get(`/api/dir?dir=${treeNode.dataRef.key}`).then(res => {
-            let temp = []
-            Object.keys(res.data).forEach(key => {
-              temp.push({
-                title: key,
-                key: `${treeNode.dataRef.key}-${key}`,
+const defaultProps = {
+  children: 'children',
+  label: 'label',
+}
+let data: { data: Tree [] } = reactive({data: []})
+
+const initTree = () => {
+  let id: number = 1;
+  axios.get('/api/dir')
+      .then(res => {
+        Object.keys(res.data).forEach((key: string) => {
+          data.data.push({
+            id: id++,
+            label: key,
+            children: res.data[key].map((filename: string) => {
+              return {
+                id: id++,
+                label: filename,
                 isLeaf: true
-              })
+              }
             })
-            treeNode.dataRef.children = temp
-            treeData.value = [...treeData.value]
-            resolve()
-          })
-        }
-      })
-    }
-
-    onMounted(() => {
-      axios.get('/api/dir').then(res => {
-        Object.keys(res.data).forEach(key => {
-          treeData.value.push({
-            title: key,
-            key: key,
           })
         })
-        treeData.value = [...treeData.value]
       })
-    });
+}
 
-    return {
-      expandedKeys,
-      selectedKeys,
-      treeData,
-      log,
+// 日志滚动
+const scroll = (pos: number) => {
+  window.scrollTo({
+    top: pos ? document.body.clientHeight : 0,
+    behavior: 'smooth'
+  })
+}
 
-      handleSelect,
-      onLoadData
-    }
-  },
+onMounted(() => {
+  initTree();
+  console.log(data.data)
 })
 </script>
 
@@ -124,10 +96,6 @@ export default defineComponent({
   height: 100vh;
   float: left;
   position: fixed;
-}
-
-.left .btn {
-  margin-right: 20px;
 }
 
 .right {
